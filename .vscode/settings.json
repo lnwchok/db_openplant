@@ -1,0 +1,11 @@
+{
+    "editor.formatOnType": true,
+    "editor.minimap.enabled": false,
+    "editor.formatOnSaveMode": "file",
+    "editor.formatOnSave": true,
+    "editor.fontVariations": false,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    }
+}

@@ -37,7 +37,7 @@ for openplant_tbl in cursor.fetchall():
         matl[openplant_tbl[3]] = [
             [openplant_tbl[0], openplant_tbl[1], openplant_tbl[2]]
         ]
-        matl_sql[openplant_tbl[3]] = ""
+        matl_sql[openplant_tbl[3]] = []
     else:
         matl[openplant_tbl[3]].append(
             [openplant_tbl[0], openplant_tbl[1], openplant_tbl[2]]
@@ -45,6 +45,12 @@ for openplant_tbl in cursor.fetchall():
 
 
 # Generate SQL statement for each table category
+
+GENERAL_FIELD = (
+    r"PlantArea, Guid, LineNumber, Specification, Rating, Schedule, Description"
+)
+
+
 def field_stm():
     # return r"PlantArea, Guid, LineNumber, Specification, Rating, Schedule, Description, InsulationMaterial, InsulationThickness"
     return r"PlantArea, Guid, LineNumber, Specification, Rating, Schedule, Description"
@@ -93,39 +99,55 @@ def qty_stm(code):
 
 for cat in matl_sql:
     if len(matl[cat]) > 0:
+        sql_list = ""
         if len(matl[cat]) == 1:
-            matl_sql[cat] = (
-                f"SELECT '{matl[cat][0][0]}' as Ref_DB, {field_stm()}, {size_stm(matl[cat][0][2])}, {qty_stm(matl[cat][0][1])} FROM {matl[cat][0][0]}"
-            )
+            sql_list = f"SELECT '{matl[cat][0][0]}' as Ref_DB, {GENERAL_FIELD}, {size_stm(matl[cat][0][2])}, {qty_stm(matl[cat][0][1])} FROM {matl[cat][0][0]}"
         else:
             for idx in range(len(matl[cat])):
-                matl_sql[
-                    cat
-                ] += f"SELECT '{matl[cat][idx][0]}' as Ref_DB, {field_stm()}, {size_stm(matl[cat][idx][2])}, {qty_stm(matl[cat][idx][1])} FROM {matl[cat][idx][0]}"
+                sql_list += f"SELECT '{matl[cat][idx][0]}' as Ref_DB, {GENERAL_FIELD}, {size_stm(matl[cat][idx][2])}, {qty_stm(matl[cat][idx][1])} FROM {matl[cat][idx][0]}"
                 if idx != len(matl[cat]) - 1:
-                    matl_sql[cat] += " UNION "
+                    sql_list += " UNION "
+
+        sql_sum = f"SELECT A.PlantArea, A.Description, A.Size1, A.Size2, sum(A.Qty) as NET FROM ({sql_list}) as A GROUP BY A.PlantArea, A.Description, A.Size1, A.Size2"
+
+        matl_sql[cat] = [sql_list, sql_sum]
 
 
-# print(matl_sql)
+# print(matl_sql["Pipe"][1])
 
-pipe_df = pd.read_sql(matl_sql["Pipe"], con=conn)
-flange_df = pd.read_sql(matl_sql["Flange"], con=conn)
-fitting_df = pd.read_sql(matl_sql["Fitting"], con=conn)
-gasket_df = pd.read_sql(matl_sql["Gasket"], con=conn)
-bolt_df = pd.read_sql(matl_sql["Bolt"], con=conn)
-valve_df = pd.read_sql(matl_sql["Valve"], con=conn)
-instr_df = pd.read_sql(matl_sql["Instr"], con=conn)
-pipacc_df = pd.read_sql(matl_sql["PipAcc"], con=conn)
+# pipe_df_list = pd.read_sql(matl_sql["Pipe"][0], con=conn)
+# flange_df_list = pd.read_sql(matl_sql["Flange"][0], con=conn)
+# fitting_df_list = pd.read_sql(matl_sql["Fitting"][0], con=conn)
+# gasket_df_list = pd.read_sql(matl_sql["Gasket"][0], con=conn)
+# bolt_df_list = pd.read_sql(matl_sql["Bolt"][0], con=conn)
+# valve_df_list = pd.read_sql(matl_sql["Valve"][0], con=conn)
+# instr_df_list = pd.read_sql(matl_sql["Instr"][0], con=conn)
+# pipacc_df_list = pd.read_sql(matl_sql["PipAcc"][0], con=conn)
+
+# pipe_df_sum = pd.read_sql_query(matl_sql["Pipe"][1], con=conn)
+flange_df_sum = pd.read_sql(matl_sql["Flange"][1], con=conn)
+# fitting_df_sum = pd.read_sql(matl_sql["Fitting"][1], con=conn)
+# gasket_df_sum = pd.read_sql(matl_sql["Gasket"][1], con=conn)
+# bolt_df_sum = pd.read_sql(matl_sql["Bolt"][1], con=conn)
+# valve_df_sum = pd.read_sql(matl_sql["Valve"][1], con=conn)
+# instr_df_sum = pd.read_sql(matl_sql["Instr"][1], con=conn)
+# pipacc_df_sum = pd.read_sql(matl_sql["PipAcc"][1], con=conn)
 
 # with pd.ExcelWriter("BQ.xlsx") as writer:
-#     pipe_df.to_excel(writer, sheet_name="pipe_list", index=False)
-#     flange_df.to_excel(writer, sheet_name="flg_list", index=False)
-#     fitting_df.to_excel(writer, sheet_name="fitting_list", index=False)
-#     gasket_df.to_excel(writer, sheet_name="gasket_list", index=False)
-#     bolt_df.to_excel(writer, sheet_name="bolt_list", index=False)
-#     valve_df.to_excel(writer, sheet_name="valve_list", index=False)
-#     instr_df.to_excel(writer, sheet_name="instr_list", index=False)
-#     pipacc_df.to_excel(writer, sheet_name="pipacc_list", index=False)
+#     pipe_df_list.to_excel(writer, sheet_name="pipe_list", index=False)
+#     pipe_df_sum.to_excel(writer, sheet_name="pipe_sum", index=False)
+#     flange_df_list.to_excel(writer, sheet_name="flg_list", index=False)
+#     flange_df_sum.to_excel(writer, sheet_name="flg_sum", index=False)
+#     fitting_df_list.to_excel(writer, sheet_name="fitting_list", index=False)
+#     fitting_df_sum.to_excel(writer, sheet_name="fitting_sum", index=False)
+#     gasket_df_list.to_excel(writer, sheet_name="gasket_list", index=False)
+#     gasket_df_sum.to_excel(writer, sheet_name="gasket_sum", index=False)
+#     bolt_df_list.to_excel(writer, sheet_name="bolt_list", index=False)
+#     bolt_df_sum.to_excel(writer, sheet_name="bolt_sum", index=False)
+#     valve_df_list.to_excel(writer, sheet_name="valve_list", index=False)
+#     valve_df_sum.to_excel(writer, sheet_name="valve_sum", index=False)
+#     instr_df_list.to_excel(writer, sheet_name="instr_list", index=False)
+#     pipacc_df_list.to_excel(writer, sheet_name="pipacc_list", index=False)
 
 
 # print(pipe_df)
