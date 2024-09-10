@@ -108,14 +108,21 @@ for cat in matl_sql:
                 if idx != len(matl[cat]) - 1:
                     sql_list += " UNION "
 
-        sql_sum = f"SELECT A.PlantArea, A.Description, A.Size1, A.Size2, sum(A.Qty) as NET FROM ({sql_list}) as A GROUP BY A.PlantArea, A.Description, A.Size1, A.Size2"
+        # sql_sum = f"SELECT A.PlantArea, A.Description, A.Size1, A.Size2, sum(A.Qty) as NET FROM ({sql_list}) as A GROUP BY A.PlantArea, A.Description, A.Size1, A.Size2"
 
-        matl_sql[cat] = [sql_list, sql_sum]
+        # matl_sql[cat] = [sql_list, sql_sum]
+        matl_sql[cat] = sql_list
 
 
 # print(matl_sql["Pipe"][1])
 
-# pipe_df_list = pd.read_sql(matl_sql["Pipe"][0], con=conn)
+pipe_df_list = pd.read_sql(matl_sql["Pipe"], con=conn)
+pipe_df_sum = pipe_df_list.groupby(["PlantArea", "Description", "Size1"])["Qty"].sum()
+# pipe_df_sum = pipe_df_list.groupby(["Description", "Size1", "Size2"])["Qty"].sum()
+
+# print(pipe_df_list)
+print(pipe_df_sum)
+
 # flange_df_list = pd.read_sql(matl_sql["Flange"][0], con=conn)
 # fitting_df_list = pd.read_sql(matl_sql["Fitting"][0], con=conn)
 # gasket_df_list = pd.read_sql(matl_sql["Gasket"][0], con=conn)
@@ -125,7 +132,7 @@ for cat in matl_sql:
 # pipacc_df_list = pd.read_sql(matl_sql["PipAcc"][0], con=conn)
 
 # pipe_df_sum = pd.read_sql_query(matl_sql["Pipe"][1], con=conn)
-flange_df_sum = pd.read_sql(matl_sql["Flange"][1], con=conn)
+# flange_df_sum = pd.read_sql(matl_sql["Flange"][1], con=conn)
 # fitting_df_sum = pd.read_sql(matl_sql["Fitting"][1], con=conn)
 # gasket_df_sum = pd.read_sql(matl_sql["Gasket"][1], con=conn)
 # bolt_df_sum = pd.read_sql(matl_sql["Bolt"][1], con=conn)
