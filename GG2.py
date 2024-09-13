@@ -15,18 +15,58 @@ conn = pyodbc.connect(
 def get_TableList(connection: pyodbc.Connection):
     cursor = connection.cursor()
 
-    SQL_Get_oo7 = r"SELECT A.Name, A.MAT_ID, A.SIZE_ID, B.CAT FROM OO7 as A LEFT JOIN TBL_CAT as B ON A.MAT_ID = B.ID;"
+    SQL_GET_oo7 = r"SELECT A.Name, A.MAT_ID, A.SIZE_ID, B.CAT FROM OO7 as A LEFT JOIN TBL_CAT as B ON A.MAT_ID = B.ID;"
 
     matl = {}
-    cursor.execute(SQL_Get_oo7)
+    cursor.execute(SQL_GET_oo7)
     for tbl in cursor.fetchall():
         if not tbl[3] in matl:
             matl[tbl[3]] = [[tbl[0], tbl[1], tbl[2]]]
-            # matl_sql[openplant[3]] = []
         else:
             matl[tbl[3]].append([tbl[0], tbl[1], tbl[2]])
 
     return matl
+
+
+def generate_SQL(material_table: dict):
+
+    def size_stm(code):
+        match int(code):
+            case 0:
+                sz1 = r"NominalDiameter"
+                sz2 = r"Null"
+            case 1:
+                sz1 = r"NominalDiameter"
+                sz2 = r"NominalDiameterRunEnd"
+            case 2:
+                sz1 = r"NominalDiameter"
+                sz2 = r"NominalDiameterBranchEnd"
+            case 3:
+                sz1 = r"NominalDiameter"
+                sz2 = r"NominalDiameterBranch"
+            case 4:
+                sz1 = r"BoltDiameter"
+                sz2 = r"BoltLength"
+            case _:
+                sz1 = ""
+                sz2 = ""
+
+        return f"{sz1} as Size1, {sz2} as Size2"
+
+    def qty_stm(code):
+        match int(code):
+            case 1:
+                q = r"LengthEffective"
+            case 5:
+                q = r"NumberOfBolts"
+            case _:
+                q = 1
+        return f"{q} as Qty"
+
+    sql_statement = ""
+
+    # Copy keys item from material table
+    sql_dict = dict.fromkeys(material_table, [])
 
 
 # 0	No Need
@@ -40,7 +80,9 @@ def get_TableList(connection: pyodbc.Connection):
 # 8	Instrument
 
 matl = get_TableList(conn)
-matl_sql = dict.fromkeys(matl)
+
+
+# matl_sql = dict.fromkeys(matl, [])
 
 print(matl_sql)
 
